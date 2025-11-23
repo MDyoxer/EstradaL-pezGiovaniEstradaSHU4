@@ -59,10 +59,6 @@
             gap: 10px;
         }
 
-        .card h2 i {
-            color: #667eea;
-        }
-
         .status-success {
             color: #10b981;
             background: #ecfdf5;
@@ -78,6 +74,15 @@
             padding: 12px;
             border-radius: 8px;
             border-left: 4px solid #3b82f6;
+            margin: 10px 0;
+        }
+
+        .status-error {
+            color: #ef4444;
+            background: #fef2f2;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ef4444;
             margin: 10px 0;
         }
 
@@ -159,7 +164,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
             <h1>🎓 Sistema Web Universitario</h1>
             <p>SHU4 - Arquitectura de Aplicaciones Web</p>
@@ -170,14 +174,12 @@
         $database = new Database();
         $db = $database->getConnection();
 
-        // Información del balanceo de cargas
         $hostname = gethostname();
         $server_ip = $_SERVER['SERVER_ADDR'] ?? 'No disponible';
         $timestamp = microtime(true);
-        $instance_id = substr(md5($hostname), 0, 8); // ID único corto
+        $instance_id = substr(md5($hostname), 0, 8);
         ?>
 
-        <!-- Sección de Estado del Sistema -->
         <div class="card">
             <h2>📊 Estado del Sistema</h2>
             
@@ -196,7 +198,6 @@
             </div>
         </div>
 
-        <!-- Sección de Balanceo de Cargas -->
         <div class="card">
             <h2>🔄 Balanceo de Cargas</h2>
             <p>Sistema distribuido con múltiples instancias para alta disponibilidad</p>
@@ -227,27 +228,29 @@
             </div>
         </div>
 
-        <!-- Sección de Base de Datos -->
         <div class="card">
             <h2>🗃️ Base de Datos</h2>
             
             <?php
             if ($db) {
                 try {
-                    // Crear tabla si no existe
                     $db->exec("CREATE TABLE IF NOT EXISTS estudiantes (
                         id SERIAL PRIMARY KEY,
                         nombre VARCHAR(100) NOT NULL,
-                        matricula VARCHAR(20) NOT NULL UNIQUE,
+                        matricula VARCHAR(20) NOT NULL,
                         creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )");
 
-                    // Insertar datos de ejemplo solo si no existen
-                    $db->exec("INSERT INTO estudiantes (nombre, matricula) 
-                              VALUES ('Ana García Rodríguez', 'A01234567')
-                              ON CONFLICT (matricula) DO NOTHING");
+                    $db->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_matricula_unique ON estudiantes (matricula)");
 
-                    // Obtener estudiantes
+                    $check_stmt = $db->query("SELECT COUNT(*) as count FROM estudiantes WHERE matricula = 'A01234567'");
+                    $exists = $check_stmt->fetch(PDO::FETCH_ASSOC)['count'] == 0;
+
+                    if ($exists) {
+                        $insert_stmt = $db->prepare("INSERT INTO estudiantes (nombre, matricula) VALUES (?, ?)");
+                        $insert_stmt->execute(['Ana García Rodríguez', 'A01234567']);
+                    }
+
                     $stmt = $db->query("SELECT * FROM estudiantes ORDER BY creado_en DESC");
                     $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -274,7 +277,6 @@
             ?>
         </div>
 
-        <!-- Footer -->
         <div class="footer">
             <p>🚀 <strong>Sistema desplegado en Render</strong> - Arquitectura cloud escalable</p>
             <div style="margin: 15px 0;">
