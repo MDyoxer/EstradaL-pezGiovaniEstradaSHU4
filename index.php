@@ -241,7 +241,7 @@
                         creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )");
 
-                    $db->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_matricula_unique ON estudiantes (matricula)");
+                    $db->exec("ALTER TABLE estudiantes ADD CONSTRAINT IF NOT EXISTS matricula_unique UNIQUE (matricula)");
 
                     $check_stmt = $db->query("SELECT COUNT(*) as count FROM estudiantes WHERE matricula = 'A01234567'");
                     $exists = $check_stmt->fetch(PDO::FETCH_ASSOC)['count'] == 0;
@@ -249,6 +249,7 @@
                     if ($exists) {
                         $insert_stmt = $db->prepare("INSERT INTO estudiantes (nombre, matricula) VALUES (?, ?)");
                         $insert_stmt->execute(['Ana García Rodríguez', 'A01234567']);
+                        echo '<div class="status-success">✅ Estudiante de ejemplo insertado</div>';
                     }
 
                     $stmt = $db->query("SELECT * FROM estudiantes ORDER BY creado_en DESC");
@@ -268,10 +269,31 @@
                             echo '</li>';
                         }
                         echo '</ul>';
+                    } else {
+                        echo '<div class="status-info">No hay estudiantes registrados aún.</div>';
                     }
 
                 } catch(PDOException $exception) {
                     echo '<div class="status-error">Error en la base de datos: ' . $exception->getMessage() . '</div>';
+                    
+                    try {
+                        $stmt = $db->query("SELECT * FROM estudiantes ORDER BY creado_en DESC");
+                        $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        
+                        if (count($estudiantes) > 0) {
+                            echo '<h3 style="margin: 20px 0 10px 0;">Estudiantes Registrados:</h3>';
+                            echo '<ul class="students-list">';
+                            foreach ($estudiantes as $estudiante) {
+                                echo '<li>';
+                                echo '<span class="student-info">' . $estudiante['nombre'] . ' - ' . $estudiante['matricula'] . '</span>';
+                                echo '<span class="student-id">ID: ' . $estudiante['id'] . '</span>';
+                                echo '</li>';
+                            }
+                            echo '</ul>';
+                        }
+                    } catch (Exception $e) {
+                        echo '<div class="status-error">No se pudieron cargar los estudiantes: ' . $e->getMessage() . '</div>';
+                    }
                 }
             }
             ?>
