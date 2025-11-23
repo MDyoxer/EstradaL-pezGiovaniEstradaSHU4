@@ -1,6 +1,27 @@
 services:
   - type: web
-    name: mi-app-php
-    runtime: php
-    buildCommand: ""
-    startCommand: "php -S 0.0.0.0:10000"
+    name: tu-app-web
+    env: docker
+    docker:
+      dockerfile: Dockerfile
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: SHU4  
+          property: host
+      - key: DB_NAME
+        fromDatabase:
+          name: SHU4 
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: SHU4 
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: SHU4 
+          property: password
+
+databases:
+  - name: SHU4  
+    plan: free
